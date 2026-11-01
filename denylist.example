@@ -1,0 +1,6 @@
+# One case-insensitive Python regex per line. Optional category then TAB.
+# Categories: person address organization account host path email phone secret internal other
+# person
+ExampleForbiddenPerson
+# organization
+ExampleForbiddenOrganization
