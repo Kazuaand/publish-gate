@@ -45,7 +45,7 @@ Empty lists and invalid expressions fail closed.
    input/execution error. No push, upload, or release command exists.
 
 `--judge-cmd` can be repeated exactly twice to replace both adapters. Commands
-are tokenized without a shell. Each receives the complete review request on
+are tokenized without a shell. Each receives one batch review request on
 stdin and must emit only JSON to stdout. Use independently configured reviewers;
 distinct command strings alone cannot prove independence. Custom commands are
 trusted local programs: the caller must enforce their read-only execution and
@@ -103,3 +103,32 @@ runtime. Every named key family and additional pattern has its own assertion.
 HTML splitting, Japanese names and addresses, detector errors, a clean stage
 1–2 control, changed hashes, and failed judges are checked. The self-test needs
 the actual detector dependencies but does not call paid agent judges.
+
+Images: PNG, JPEG, WebP and GIF are detected by signature. Maximum 5 MiB each; 100 frames and 20 million total rendered pixels. Unknown binaries, unknown metadata extensions and all ICC profiles fail closed. Printable ASCII in metadata and unconsumed bytes is scanned by the existing detectors and denylist. Compressed pixel streams are excluded from text scanning; all frames remain subject to both visual judges. Both judges review every frame, with per-file image_items verdicts; missing, duplicate or failing verdicts prevent publication.
+
+Use `./publish-gate strip input.png output.png` to re-render as metadata-free PNG. Animations become APNG at 100 ms per frame; inspect appearance and timing before replacing an asset. Color profiles are discarded. Input and output may be the same file. The gate never strips automatically. Claude receives base64 PNG frames using print mode stream-json input; Codex receives each frame with --image. Custom judge commands receive repeated --image path arguments.
+
+JPEG/WebP/GIF require a byte-exact decode/re-encode match because their decoders do not expose consumed byte counts. Valid images from other encoders may fail with `image-noncanonical-stream-use-strip`; use the strip command to produce PNG. PNG compressed streams must end exactly, without hidden trailing payload.
+
+## Batch controls and committed scope
+
+`--judge-batch-size 25` limits review items per call; each call carries one full
+file and at most one image (all its frames). A file with more items is repeated
+in full, while each item and image gets exactly one verdict from each judge.
+`--judge-timeout 600` sets the per-call deadline in seconds. Any batch failure
+fails the entire gate. Judge JSON retains batch verdicts and redacted failure
+class, exit code, elapsed seconds and the last 20 stderr lines. Usage-limit
+failures require an operator rerun from an environment with quota; the gate
+never changes accounts. Reasons and diagnostics are private evidence.
+
+`--git-tracked` reads committed blobs at HEAD into a temporary export, ignoring
+working edits and untracked files. It excludes node_modules, dist, .git, .venv
+and __pycache__ at every depth. Submodules and symlinks fail closed. The manifest
+and hash refer to this export, with source_head recorded in evidence. This does
+not audit history. The publisher must export those same HEAD blobs and compare
+the manifest and hash. Use check rather than loop when editing working files:
+repairs are invisible to HEAD export until the operator commits them.
+
+Files larger than 64,000 text characters fail closed before judge invocation. Split them into smaller publication files and rerun; full file text is never silently truncated.
+
+Default adapters use 80% of the outer per-call deadline for the CLI, reserving the remainder for process cleanup and redacted diagnostics, including unterminated stderr lines.

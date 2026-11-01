@@ -73,3 +73,17 @@ URL・DATE_TIME・NRP は対象外です。PERSON・LOCATION・ORGANIZATION・US
 判定者は review_items 配列に各 id・verdict・1行の reason を返します。
 公開人物・組織・場所または誤検出で、著者の本名・勤務先・取引先・所在地へ辿れない場合だけPASSです。
 両者が全項目をPASSにする必要があり、欠落・余分・重複したIDもFAILです。自動承認はありません。
+
+画像はPNG/JPEG/WebP/GIFをシグネチャで識別します。上限は各5 MiB、100フレーム、全フレーム合計2000万画素です。未知バイナリ・未知メタデータ・ICCプロファイルはFAIL。印字可能ASCII文字列にも既存検出器と禁止リストを適用します。両judgeが全フレームを見て画像ごとの判定を返し、欠落・重複・FAILがあれば公開不可です。
+
+`./publish-gate strip input.png output.png` でメタデータなしPNGへ再描画できます。アニメーションは100ms間隔のAPNGになります。色プロファイルを除去するため、置換前に表示とタイミングを確認してください。自動修正はしません。Claudeはprint modeのstream-json画像入力、Codexは--imageで全フレームを受け取ります。
+
+JPEG/WebP/GIF require a byte-exact decode/re-encode match because their decoders do not expose consumed byte counts. Valid images from other encoders may fail with `image-noncanonical-stream-use-strip`; use the strip command to produce PNG. PNG compressed streams must end exactly, without hidden trailing payload.
+
+## バッチと HEAD の検査
+
+`--judge-batch-size 25` で1回の審査項目数、`--judge-timeout 600` で1回の秒数上限を指定します。ファイル全文をバッチに渡し、同じファイルの項目が多い場合は全文を再送します。画像は1回につき最大1枚で全フレームを渡します。項目・画像の欠落や1バッチのエラーでも段4は FAIL。judge JSON にマスク済みの失敗分類・終了コード・経過秒・stderr末尾を残します。利用上限時は枠のある環境から運用者が再実行してください。
+
+`--git-tracked` は HEAD の blob を一時領域へ書き出します。作業中の変更や未追跡ファイルを含めず、node_modules/dist/.git/.venv/__pycache__ は全階層で除外。manifest と hash はこの書き出しに対応します。symlink と submodule は拒否します。修正を反映するにはコミットが必要です。
+
+画像の文字検査はメタデータ・付随領域・未消費バイトを対象とし、圧縮画素領域は除外します。画素は両 judge の全フレーム視覚審査、メタデータは既存の拒否検査で扱います。

@@ -130,7 +130,7 @@ class GateTest(unittest.TestCase):
     @patch.object(gate, 'external', return_value=([], {}))
     @patch.object(gate, 'analyzer_load', return_value=None)
     def test_fail_on_tree_mutation(self, *_):
-        def mutate(*args):
+        def mutate(*args, **kwargs):
             self.source.write_text('Changed')
             return [], []
         with patch.object(gate, 'judges', side_effect=mutate):
@@ -140,3 +140,7 @@ class GateTest(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+from image_tests import ImageTest
+
+from r4_tests import RoundFourTest

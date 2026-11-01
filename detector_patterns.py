@@ -15,6 +15,7 @@ PATTERNS = {
     'slack': PREFIX + r'xox[baprs]-[A-Za-z0-9-]{12,}',
     'generic-key': PREFIX + r'sk-(?!proj-|ant-)[A-Za-z0-9_-]{20,}',
     'label-value': r'(?i)(?:password|passwd|api[_ -]?key|access[_ -]?token|client[_ -]?secret|パスワード|認証情報|ユーザー名)\s*(?:[:=：]|\n|\bis\b|\bare\b)\s*[^\s<>]+',
+    'label-value-gap': r'(?i)\b(?:password|passwd|token|api[_ -]?key|access[_ -]?token|client[_ -]?secret)\s+for\s+[^\r\n:;=]{1,80}?\s*(?:[:=]|\bis\b)\s*[^\s<>]+',
     'capability-url': r'https?://[^\s<>"\']+(?:[?&#](?:token|key|secret|signature|sig|invite|auth)=|/(?:invite|join|reset-password)/)[^\s<>"\']+',
     'private-ip': r'(?<![\d.])(?:10(?:\.\d{1,3}){3}|192\.168(?:\.\d{1,3}){2}|172\.(?:1[6-9]|2\d|3[01])(?:\.\d{1,3}){2}|127(?:\.\d{1,3}){3}|169\.254(?:\.\d{1,3}){2})(?![\d.])',
     'private-ipv6': r'(?i)(?<!\w)(?:f[cd][0-9a-f]{2}|fe[89ab][0-9a-f]):[0-9a-f:]+',

@@ -6,6 +6,9 @@ from publish_gate import analyzer_load, scan, deny_rules, external, digest, judg
 
 
 def selftest():
+    import unittest
+    from image_tests import ImageTest
+    assert unittest.TextTestRunner().run(unittest.defaultTestLoader.loadTestsFromTestCase(ImageTest)).wasSuccessful(), 'image-controls'
     repeated = 'A' * 40
     samples = {
         'openai-project': 'sk-' + 'proj-' + repeated,
@@ -22,6 +25,7 @@ def selftest():
         'slack': 'xo' + 'xb-' + repeated,
         'generic-key': 's' + 'k-' + repeated,
         'label-value': 'pass' + 'word:\nnot-a-real-credential',
+        'label-value-gap': 'pass' + 'word for Example is ' + repeated,
         'capability-url': 'https://example.invalid/' + '?token=' + repeated,
         'private-ip': '.'.join(['192', '168', '20', '30']),
         'private-ipv6': ':'.join(['fd12', '', '1234']),
@@ -55,6 +59,10 @@ def selftest():
         (tree / 'prose.txt').write_text('The pass' + 'word is fake-value.')
         (tree / 'short.txt').write_text('pass' + 'word: xy')
         (tree / 'japanese.txt').write_text(name + '\n' + address)
+        from detector_patterns import PATTERNS
+        for label in ['pass' + 'word', 'the to' + 'ken']:
+            assert re.search(PATTERNS['label-value-gap'], label + ' for Example: ' + repeated)
+            assert not re.search(PATTERNS['label-value-gap'], label + ' for Example should be rotated.')
         first, second, _ = scan(tree, rules, analyzer)
         for rule in samples:
             assert any(f['file'] == rule + '.txt' and f['rule_id'] == rule for f in first), rule
